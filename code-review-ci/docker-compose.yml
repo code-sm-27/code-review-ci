@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: codereview_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: codereview_ci
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  sqs:
+    image: softwaremill/elasticmq-native
+    container_name: codereview_sqs
+    ports:
+      - "9324:9324" # SQS API Port
+      - "9325:9325" # Web UI Dashboard Port!
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

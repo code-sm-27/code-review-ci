@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: code-review-ci
+  datasource:
+    url: jdbc:postgresql://localhost:5432/codereview_ci
+    username: admin
+    password: secure_password_123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update # We will migrate to Flyway/Liquibase in a later phase
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  cloud:
+    aws:
+      credentials:
+        access-key: test # Dummy credentials for LocalStack
+        secret-key: test
+      region:
+        static: us-east-1
+      sqs:
+        endpoint: http://localhost:9324
+
+  app:
+    sqs:
+      pr-queue-name: pr-ingestion-queue
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.yourdomain.codereview: DEBUG # Replace with your actual base package
