@@ -20,7 +20,8 @@ export const Login = () => {
   }, [searchParams, login, navigate, token]);
 
   const handleGithubLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:8080';
+    window.location.href = `${baseUrl}/oauth2/authorization/github`;
   };
 
   return (
