@@ -35,6 +35,9 @@ public class GithubWebhookPayload {
         @JsonProperty("html_url")
         private String htmlUrl;
 
+        @JsonProperty("diff_url")
+        private String diffUrl;
+
         private Head head;
     }
 

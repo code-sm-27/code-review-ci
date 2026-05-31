@@ -1,1 +1,17 @@
+# Build output
 target/
+dist/
+node_modules/
+build/
+*.jar
+
+# Environment Variables
+.env
+.env.*
+.env.local
+
+# IDEs and Tools
+.idea/
+*.iml
+.vscode/
+.DS_Store

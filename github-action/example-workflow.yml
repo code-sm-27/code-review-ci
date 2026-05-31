@@ -1,0 +1,14 @@
+name: AI Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger CodeReview CI
+        uses: codesm27/codereview-ci-action@v1 # Example placeholder for the published action
+        with:
+          api-url: 'https://api.your-codereview-ci.com'
+          token: ${{ secrets.GITHUB_TOKEN }}
