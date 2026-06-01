@@ -4,6 +4,7 @@ import com.github.codesm27.codereview.entity.PullRequest;
 import com.github.codesm27.codereview.entity.Review;
 import com.github.codesm27.codereview.repository.PullRequestRepository;
 import com.github.codesm27.codereview.repository.ReviewRepository;
+import com.github.codesm27.codereview.service.SseEmitterService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class InternalApiController {
 
     private final PullRequestRepository prRepository;
     private final ReviewRepository reviewRepository;
+    private final SseEmitterService sseEmitterService;
 
     @PostMapping("/reviews")
     public ResponseEntity<Void> addReviews(@RequestBody ReviewRequest payload) {
@@ -43,6 +45,10 @@ public class InternalApiController {
             review.setComment(data.getComment());
             reviewRepository.save(review);
         }
+
+        // Notify the user about the completed review via SSE
+        String ownerGithubId = pr.getRepository().getOwner().getGithubId();
+        sseEmitterService.sendReviewNotification(ownerGithubId, pr.getRepository().getFullName(), pr.getPrNumber());
 
         return ResponseEntity.ok().build();
     }
