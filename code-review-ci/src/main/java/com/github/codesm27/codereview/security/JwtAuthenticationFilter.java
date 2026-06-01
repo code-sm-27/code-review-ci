@@ -28,16 +28,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String githubId;
+        String authHeader = request.getHeader("Authorization");
+        String jwt = null;
+        String githubId;
 
-        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        } else {
+            // Check for token in query parameters (for SSE and WebSockets)
+            String tokenParam = request.getParameter("token");
+            if (StringUtils.hasText(tokenParam)) {
+                jwt = tokenParam;
+            }
+        }
+
+        if (!StringUtils.hasText(jwt)) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        jwt = authHeader.substring(7);
         
         try {
             githubId = jwtUtil.extractGithubId(jwt);

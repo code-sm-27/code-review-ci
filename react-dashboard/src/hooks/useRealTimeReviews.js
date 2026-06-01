@@ -13,7 +13,11 @@ export function useRealTimeReviews() {
     // For now, let's assume standard auth cookies or we will pass token in URL if needed.
     
     const token = localStorage.getItem('jwt');
-    const sseUrl = token ? `/api/v1/sse/subscribe?token=${token}` : '/api/v1/sse/subscribe';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+    
+    // Ensure baseUrl doesn't have a trailing slash for consistency
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const sseUrl = token ? `${cleanBaseUrl}/sse/subscribe?token=${token}` : `${cleanBaseUrl}/sse/subscribe`;
     
     // Using native EventSource
     const eventSource = new EventSource(sseUrl);
