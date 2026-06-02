@@ -45,20 +45,25 @@ public class ApiController {
         return ResponseEntity.ok(repos);
     }
 
-    @PostMapping("/repos")
+    @PostMapping("/repos/connect")
     public ResponseEntity<RepoDto> connectRepo(@RequestBody com.github.codesm27.codereview.dto.request.ConnectRepoRequest request) {
         User user = getCurrentUser();
         
-        // Check if repo already connected
         if (repoRepository.findByFullName(request.getFullName()).isPresent()) {
             throw new RuntimeException("Repository already connected");
         }
+
+        String webhookSecret = java.util.UUID.randomUUID().toString(); // Generate unique secret
 
         com.github.codesm27.codereview.entity.GithubRepo repo = new com.github.codesm27.codereview.entity.GithubRepo();
         repo.setOwner(user);
         repo.setFullName(request.getFullName());
         repo.setDescription(request.getDescription());
         repo.setUrl(request.getUrl());
+        repo.setWebhookSecret(webhookSecret);
+        
+        // TODO: Call GitHub API to register webhook programmatically using user's OAuth token
+        // String webhookId = githubClient.registerWebhook(request.getFullName(), webhookSecret);
         
         repo = repoRepository.save(repo);
         
@@ -74,9 +79,13 @@ public class ApiController {
     }
 
     @GetMapping("/reviews")
-    public ResponseEntity<List<ReviewDto>> getReviews(@RequestParam Long prId) {
-        // Assume user validation passed for simplicity (could add PR owner check)
-        List<ReviewDto> reviews = reviewRepository.findByPullRequestId(prId).stream()
+    public ResponseEntity<org.springframework.data.domain.Page<ReviewDto>> getReviews(
+            @RequestParam Long repoId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<ReviewDto> reviews = reviewRepository.findByPullRequestRepositoryId(repoId, pageable)
                 .map(r -> ReviewDto.builder()
                         .id(r.getId())
                         .prId(r.getPullRequest().getId())
@@ -86,23 +95,25 @@ public class ApiController {
                         .category(r.getCategory())
                         .comment(r.getComment())
                         .createdAt(r.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
+                        .build());
         return ResponseEntity.ok(reviews);
     }
 
     @GetMapping("/analytics/severity")
-    public ResponseEntity<Map<String, Long>> getSeverityAnalytics() {
-        // Aggregate severity counts for the user's repos (mock logic for now, using all reviews)
-        Map<String, Long> severityCounts = reviewRepository.findAll().stream()
+    public ResponseEntity<Map<String, Long>> getSeverityAnalytics(@RequestParam Long repoId) {
+        Map<String, Long> severityCounts = reviewRepository.findByPullRequestRepositoryId(repoId).stream()
                 .collect(Collectors.groupingBy(r -> r.getSeverity().name(), Collectors.counting()));
         return ResponseEntity.ok(severityCounts);
     }
 
     @GetMapping("/analytics/trend")
-    public ResponseEntity<Map<String, Long>> getTrendAnalytics() {
-        // Group by Date for reviews created
-        Map<String, Long> trend = reviewRepository.findAll().stream()
+    public ResponseEntity<Map<String, Long>> getTrendAnalytics(
+            @RequestParam Long repoId,
+            @RequestParam(defaultValue = "30") int days) {
+        
+        java.time.LocalDateTime startDate = java.time.LocalDateTime.now().minusDays(days);
+        
+        Map<String, Long> trend = reviewRepository.findByPullRequestRepositoryIdAndCreatedAtAfter(repoId, startDate).stream()
                 .collect(Collectors.groupingBy(r -> r.getCreatedAt().toLocalDate().toString(), Collectors.counting()));
         return ResponseEntity.ok(trend);
     }

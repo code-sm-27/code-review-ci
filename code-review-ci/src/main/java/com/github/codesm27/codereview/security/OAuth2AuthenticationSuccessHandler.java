@@ -21,18 +21,30 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final org.springframework.security.oauth2.client.OAuth2AuthorizedClientService authorizedClientService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken oauthToken = 
+                (org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken) authentication;
+        
+        OAuth2User oAuth2User = oauthToken.getPrincipal();
         
         String githubId = String.valueOf(oAuth2User.getAttributes().get("id"));
         String login = (String) oAuth2User.getAttributes().get("login");
         String email = (String) oAuth2User.getAttributes().get("email");
         String avatarUrl = (String) oAuth2User.getAttributes().get("avatar_url");
+
+        // Retrieve the OAuth2 access token
+        org.springframework.security.oauth2.client.OAuth2AuthorizedClient client = 
+                authorizedClientService.loadAuthorizedClient(
+                        oauthToken.getAuthorizedClientRegistrationId(), 
+                        oauthToken.getName());
+        
+        String githubAccessToken = client.getAccessToken().getTokenValue();
 
         // Save or update user
         User user = userRepository.findByGithubId(githubId).orElse(new User());
@@ -40,14 +52,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         user.setUsername(login);
         user.setEmail(email);
         user.setAvatarUrl(avatarUrl);
+        user.setGithubAccessToken(githubAccessToken);
         userRepository.save(user);
 
-        // Generate JWT
-        String token = jwtUtil.generateToken(githubId);
+        // Generate Tokens
+        String accessToken = jwtUtil.generateAccessToken(githubId);
+        String refreshToken = jwtUtil.generateRefreshToken(githubId);
 
-        // Redirect to frontend with token
+        // Redirect to frontend with tokens
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("token", token)
+                .queryParam("accessToken", accessToken)
+                .queryParam("refreshToken", refreshToken)
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

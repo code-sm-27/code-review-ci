@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { GitBranch as Github, ExternalLink, Plus } from 'lucide-react';
 import './Dashboard.css'; // Reusing dashboard header styles
@@ -19,7 +20,7 @@ export const Repositories = () => {
 
   const connectMutation = useMutation({
     mutationFn: async (newRepo) => {
-      const res = await api.post('/repos', newRepo);
+      const res = await api.post('/repos/connect', newRepo);
       return res.data;
     },
     onSuccess: () => {
@@ -97,10 +98,15 @@ export const Repositories = () => {
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{repo.fullName}</h4>
                   <p className="text-secondary" style={{ margin: 0, fontSize: '0.9rem' }}>{repo.description || 'No description provided'}</p>
                 </div>
-                <a href={repo.url} target="_blank" rel="noreferrer" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  <ExternalLink size={16} />
-                  View
-                </a>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <a href={repo.url} target="_blank" rel="noreferrer" className="btn" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <Github size={16} />
+                  </a>
+                  <Link to={`/repos/${repo.id}`} className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <ExternalLink size={16} />
+                    View Details
+                  </Link>
+                </div>
               </div>
             ))}
             {repos?.length === 0 && (

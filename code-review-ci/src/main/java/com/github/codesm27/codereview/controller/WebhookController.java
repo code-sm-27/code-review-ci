@@ -32,7 +32,7 @@ public class WebhookController {
     public ResponseEntity<Void> handleGithubWebhook(
             @RequestHeader(value = "X-GitHub-Event", required = false) String eventType,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature,
-            @RequestBody String rawPayload) {
+            @RequestBody byte[] rawPayload) {
 
         try {
             // 1. Validate the event type
@@ -41,13 +41,7 @@ public class WebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            // 2. Validate HMAC-SHA256 signature
-            if (!signatureValidator.isValidSignature(rawPayload, signature)) {
-                log.warn("Invalid GitHub webhook signature");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            // 3. Parse Payload
+            // 2. Parse Payload
             GithubWebhookPayload payload = objectMapper.readValue(rawPayload, GithubWebhookPayload.class);
 
             if (payload == null || payload.getPullRequest() == null || payload.getRepository() == null) {
@@ -55,30 +49,34 @@ public class WebhookController {
                 return ResponseEntity.badRequest().build();
             }
 
-            // Only process opened or synchronize actions
+            String repoFullName = payload.getRepository().getFullName();
+
+            // 3. Find repository to get its webhook_secret
+            Optional<GithubRepo> repoOpt = repoRepository.findByFullName(repoFullName);
+            if (repoOpt.isEmpty()) {
+                log.warn("Repository {} is not registered in CodeReview CI. Ignoring event.", repoFullName);
+                return ResponseEntity.ok().build();
+            }
+            GithubRepo repo = repoOpt.get();
+
+            // 4. Validate HMAC-SHA256 signature using repo's secret
+            if (!signatureValidator.isValidSignature(rawPayload, signature, repo.getWebhookSecret())) {
+                log.warn("Invalid GitHub webhook signature for repo {}", repoFullName);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // 5. Only process opened or synchronize actions
             String action = payload.getAction();
             if (!"opened".equals(action) && !"synchronize".equals(action)) {
                 log.debug("Ignored PR action: {}", action);
                 return ResponseEntity.ok().build();
             }
 
-            String repoFullName = payload.getRepository().getFullName();
             Integer prNumber = payload.getPullRequest().getNumber();
-            String diffUrl = payload.getPullRequest().getDiffUrl(); // Need to ensure diffUrl is added to DTO
+            String diffUrl = payload.getPullRequest().getDiffUrl();
 
             log.info("Received valid PR Event | Action: {} | Repo: {} | PR #{}: {}",
                     action, repoFullName, prNumber, payload.getPullRequest().getTitle());
-
-            // Check if repo is registered in our DB
-            Optional<GithubRepo> repoOpt = repoRepository.findByFullName(repoFullName);
-            if (repoOpt.isEmpty()) {
-                log.warn("Repository {} is not registered in CodeReview CI. Ignoring event.", repoFullName);
-                return ResponseEntity.ok().build();
-            }
-
-            GithubRepo repo = repoOpt.get();
-
-            // Save/Update PullRequest record
             PullRequest pr = prRepository.findByRepositoryIdAndPrNumber(repo.getId(), prNumber)
                     .orElse(new PullRequest());
             pr.setRepository(repo);
@@ -88,8 +86,10 @@ public class WebhookController {
             pr.setDiffUrl(diffUrl);
             prRepository.save(pr);
 
+            String installationId = payload.getInstallation() != null ? payload.getInstallation().getId() : null;
+
             // 4. Enqueue to SQS for background Lambda processing
-            sqsProducerService.enqueuePullRequest(repoFullName, prNumber, diffUrl, repo.getId());
+            sqsProducerService.enqueuePullRequest(repoFullName, prNumber, diffUrl, repo.getId(), installationId);
 
             // 5. Return immediately to prevent GitHub timeout
             return ResponseEntity.accepted().build(); // HTTP 202

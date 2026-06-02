@@ -3,15 +3,17 @@ import React, { createContext, useContext, useState } from 'react';
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('jwt'));
+  const [token, setToken] = useState(localStorage.getItem('accessToken'));
 
-  const login = (newToken) => {
-    localStorage.setItem('jwt', newToken);
-    setToken(newToken);
+  const login = (accessToken, refreshToken) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    setToken(accessToken);
   };
 
   const logout = () => {
-    localStorage.removeItem('jwt');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     setToken(null);
   };
 

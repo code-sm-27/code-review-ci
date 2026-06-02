@@ -21,6 +21,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final RateLimitFilter rateLimitFilter;
+    private final MdcLoggingFilter mdcLoggingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,14 +31,18 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/webhooks/github").permitAll()
+                .requestMatchers("/webhook/github").permitAll()
                 .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/auth/refresh").permitAll()
                 .requestMatchers("/internal/**").permitAll() // Secure via internal network or API key
+                .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             )
+            .addFilterBefore(mdcLoggingFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

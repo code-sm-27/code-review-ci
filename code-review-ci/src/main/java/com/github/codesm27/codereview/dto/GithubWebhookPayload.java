@@ -58,4 +58,15 @@ public class GithubWebhookPayload {
         @JsonProperty("full_name")
         private String fullName;
     }
+
+    @JsonProperty("installation")
+    private Installation installation;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Installation {
+        private String id;
+    }
 }

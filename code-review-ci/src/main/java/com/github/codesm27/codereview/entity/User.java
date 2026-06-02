@@ -25,6 +25,9 @@ public class User {
     
     private String avatarUrl;
 
+    @Column(name = "github_access_token")
+    private String githubAccessToken;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

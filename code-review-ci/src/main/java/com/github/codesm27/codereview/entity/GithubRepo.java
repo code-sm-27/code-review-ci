@@ -23,6 +23,12 @@ public class GithubRepo {
     
     private String url;
 
+    @Column(name = "webhook_secret")
+    private String webhookSecret;
+
+    @Column(name = "installation_id")
+    private String installationId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner; // The user who connected this repo

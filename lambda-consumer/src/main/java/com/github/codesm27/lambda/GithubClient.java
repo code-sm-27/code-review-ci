@@ -12,16 +12,12 @@ public class GithubClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String githubToken;
-
     public GithubClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
-        // Fallback for demo, in production we should retrieve token from DB or secure vault
-        this.githubToken = System.getenv("GITHUB_TOKEN");
     }
 
-    public String fetchPrDiff(String repoFullName, Integer prNumber) throws Exception {
+    public String fetchPrDiff(String repoFullName, Integer prNumber, String githubToken) throws Exception {
         String url = String.format("https://api.github.com/repos/%s/pulls/%s", repoFullName, prNumber);
         
         HttpRequest request = HttpRequest.newBuilder()
@@ -40,14 +36,17 @@ public class GithubClient {
         return response.body();
     }
 
-    public void postReviewComment(String repoFullName, Integer prNumber, String commitId, String path, int line, String body) throws Exception {
-        String url = String.format("https://api.github.com/repos/%s/pulls/%s/comments", repoFullName, prNumber);
+    public void postReview(String repoFullName, Integer prNumber, String commitId, List<Map<String, Object>> comments, String githubToken) throws Exception {
+        if (comments == null || comments.isEmpty()) {
+            return;
+        }
+
+        String url = String.format("https://api.github.com/repos/%s/pulls/%s/reviews", repoFullName, prNumber);
         
         Map<String, Object> payload = Map.of(
-                "body", body,
                 "commit_id", commitId,
-                "path", path,
-                "line", line
+                "event", "COMMENT",
+                "comments", comments
         );
         
         String jsonPayload = objectMapper.writeValueAsString(payload);
@@ -62,8 +61,10 @@ public class GithubClient {
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         
-        if (response.statusCode() >= 400) {
-            System.err.println("Failed to post comment to GitHub. Status: " + response.statusCode() + ", Body: " + response.body());
+        if (response.statusCode() == 422) {
+            System.err.println("GitHub rejected review (422) - possibly unchanged lines or invalid commit id: " + response.body());
+        } else if (response.statusCode() >= 400) {
+            System.err.println("Failed to post review to GitHub. Status: " + response.statusCode() + ", Body: " + response.body());
         }
     }
 }

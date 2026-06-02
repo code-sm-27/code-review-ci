@@ -23,9 +23,34 @@ public class InternalApiController {
     private final PullRequestRepository prRepository;
     private final ReviewRepository reviewRepository;
     private final SseEmitterService sseEmitterService;
+    private final com.github.codesm27.codereview.repository.GithubRepoRepository repoRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${app.internal.key:secret-internal-key}")
+    private String internalKey;
+
+    private void validateInternalKey(String key) {
+        if (!internalKey.equals(key)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Invalid internal key");
+        }
+    }
+
+    @GetMapping("/token/{repoId}")
+    public ResponseEntity<java.util.Map<String, String>> getGithubToken(
+            @PathVariable Long repoId,
+            @RequestHeader(value = "X-Internal-Key", required = false) String key) {
+        validateInternalKey(key);
+
+        return repoRepository.findById(repoId)
+                .map(repo -> ResponseEntity.ok(java.util.Map.of("token", repo.getOwner().getGithubAccessToken())))
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     @PostMapping("/reviews")
-    public ResponseEntity<Void> addReviews(@RequestBody ReviewRequest payload) {
+    public ResponseEntity<Void> addReviews(
+            @RequestBody ReviewRequest payload,
+            @RequestHeader(value = "X-Internal-Key", required = false) String key) {
+        validateInternalKey(key);
+
         Optional<PullRequest> prOpt = prRepository.findByRepositoryIdAndPrNumber(payload.getRepoId(), payload.getPrNumber());
         
         if (prOpt.isEmpty()) {

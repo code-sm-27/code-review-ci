@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Repositories } from './pages/Repositories';
+import { RepoDetails } from './pages/RepoDetails';
 import { Analytics } from './pages/Analytics';
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/repos" element={<Repositories />} />
+                <Route path="/repos/:id" element={<RepoDetails />} />
                 <Route path="/analytics" element={<Analytics />} />
               </Route>
             </Route>

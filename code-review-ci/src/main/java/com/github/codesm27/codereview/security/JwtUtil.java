@@ -16,15 +16,23 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final SecretKey key;
-    private final long expiration;
 
-    public JwtUtil(@Value("${app.jwt.secret}") String secret,
-                   @Value("${app.jwt.expiration}") long expiration) {
+
+    public JwtUtil(@Value("${app.jwt.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expiration = expiration;
     }
 
-    public String generateToken(String githubId) {
+    public String generateAccessToken(String githubId) {
+        long expiration = 3600000; // 1 hour
+        return buildToken(githubId, expiration);
+    }
+
+    public String generateRefreshToken(String githubId) {
+        long expiration = 604800000; // 7 days
+        return buildToken(githubId, expiration);
+    }
+
+    private String buildToken(String githubId, long expiration) {
         return Jwts.builder()
                 .setSubject(githubId)
                 .setIssuedAt(new Date(System.currentTimeMillis()))

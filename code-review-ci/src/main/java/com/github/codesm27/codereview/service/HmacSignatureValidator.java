@@ -12,10 +12,7 @@ import java.security.MessageDigest;
 @Slf4j
 public class HmacSignatureValidator {
 
-    @Value("${app.github.webhook.secret}")
-    private String webhookSecret;
-
-    public boolean isValidSignature(String payloadBody, String githubSignature) {
+    public boolean isValidSignature(byte[] payloadBody, String githubSignature, String repoWebhookSecret) {
         if (githubSignature == null || !githubSignature.startsWith("sha256=")) {
             return false;
         }
@@ -24,10 +21,10 @@ public class HmacSignatureValidator {
             String actualSignature = githubSignature.substring(7);
             
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(webhookSecret.getBytes(), "HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(repoWebhookSecret.getBytes(), "HmacSHA256");
             mac.init(secretKeySpec);
             
-            byte[] rawHmac = mac.doFinal(payloadBody.getBytes());
+            byte[] rawHmac = mac.doFinal(payloadBody);
             String expectedSignature = bytesToHex(rawHmac);
 
             // Use MessageDigest.isEqual for constant-time comparison to prevent timing attacks

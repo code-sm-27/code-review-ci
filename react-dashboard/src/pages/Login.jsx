@@ -10,9 +10,10 @@ export const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const urlToken = searchParams.get('token');
-    if (urlToken) {
-      login(urlToken);
+    const accessToken = searchParams.get('accessToken');
+    const refreshToken = searchParams.get('refreshToken');
+    if (accessToken && refreshToken) {
+      login(accessToken, refreshToken);
       navigate('/');
     } else if (token) {
       navigate('/');

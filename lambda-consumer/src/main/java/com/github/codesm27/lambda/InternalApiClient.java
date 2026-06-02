@@ -13,14 +13,31 @@ public class InternalApiClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String backendUrl;
+    private final String backendBaseUrl;
     private final String internalApiKey;
 
     public InternalApiClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
-        this.backendUrl = System.getenv("BACKEND_URL"); // e.g., http://backend:8080/internal/reviews
+        this.backendBaseUrl = System.getenv("BACKEND_URL"); // e.g., http://backend:8080
         this.internalApiKey = System.getenv("INTERNAL_API_KEY");
+    }
+
+    public String getGithubToken(Long repoId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(backendBaseUrl + "/internal/token/" + repoId))
+                .header("X-Internal-Key", internalApiKey != null ? internalApiKey : "secret-internal-key")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(response.body());
+            return root.path("token").asText();
+        } else {
+            throw new RuntimeException("Failed to fetch github token for repo " + repoId + " status " + response.statusCode());
+        }
     }
 
     public void persistReviews(Long repoId, Integer prNumber, AiReviewResponse aiResponse) throws Exception {
@@ -48,9 +65,9 @@ public class InternalApiClient {
         String jsonPayload = objectMapper.writeValueAsString(payload);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(backendUrl))
+                .uri(URI.create(backendBaseUrl + "/internal/reviews"))
                 .header("Content-Type", "application/json")
-                .header("X-Internal-Api-Key", internalApiKey != null ? internalApiKey : "mock_internal_key")
+                .header("X-Internal-Key", internalApiKey != null ? internalApiKey : "secret-internal-key")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
