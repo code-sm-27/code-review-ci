@@ -30,8 +30,7 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST:localhost}
-      port: ${SPRING_REDIS_PORT:6379}
+      url: ${REDIS_URL:redis://${SPRING_REDIS_HOST:localhost}:${SPRING_REDIS_PORT:6379}}
 
   security:
     oauth2:
