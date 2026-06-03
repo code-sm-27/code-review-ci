@@ -29,8 +29,6 @@ spring:
     locations: classpath:db/migration
 
   data:
-    redis:
-      url: ${REDIS_URL:redis://${SPRING_REDIS_HOST:localhost}:${SPRING_REDIS_PORT:6379}}
 
   security:
     oauth2:

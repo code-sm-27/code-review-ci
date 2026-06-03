@@ -1,13 +1,11 @@
 package com.github.codesm27.codereview.security;
 
 import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.BucketConfiguration;
-import io.github.bucket4j.distributed.proxy.ProxyManager;
+import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,17 +14,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.function.Supplier;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final ProxyManager<byte[]> proxyManager;
-
-    @Autowired
-    public RateLimitFilter(ProxyManager<byte[]> proxyManager) {
-        this.proxyManager = proxyManager;
-    }
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -47,9 +41,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             key = "ip:" + request.getRemoteAddr();
         }
 
-        Supplier<BucketConfiguration> configSupplier = getConfigSupplierForUser();
-
-        var bucket = proxyManager.builder().build(key.getBytes(), configSupplier);
+        Bucket bucket = buckets.computeIfAbsent(key, k -> createNewBucket());
         
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
@@ -60,9 +52,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 
-    private Supplier<BucketConfiguration> getConfigSupplierForUser() {
-        return () -> BucketConfiguration.builder()
-                .addLimit(Bandwidth.simple(100, Duration.ofMinutes(1)))
-                .build();
+    private Bucket createNewBucket() {
+        Bandwidth limit = Bandwidth.simple(100, Duration.ofMinutes(1));
+        return Bucket.builder().addLimit(limit).build();
     }
 }
