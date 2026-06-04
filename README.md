@@ -4,6 +4,12 @@
 
 CodeReview CI is a fully automated, AI-powered code review assistant. It hooks into your GitHub pull requests, triggers an AWS SQS queue, and processes the diff using Anthropic's Claude to post structured, insightful code review comments back to the PR.
 
+## Features
+
+- **Automated AI Code Review:** Analyzes pull request diffs using Anthropic's Claude.
+- **Asynchronous Processing:** Utilizes AWS SQS and Lambda for scalable processing.
+- **Dashboard UI:** Manage configurations and view review histories via a React frontend.
+
 ## Architecture Diagram
 
 ```mermaid
