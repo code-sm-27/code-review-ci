@@ -60,3 +60,6 @@ Create a `.env` file or export the following variables:
 
 ## Live Dashboard
 [Live URL Placeholder](https://example.com)
+
+## Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
