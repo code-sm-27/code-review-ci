@@ -59,8 +59,13 @@ export const Layout = () => {
           </button>
         </div>
       </aside>
-      <main className="main-content">
-        <Outlet />
+      <main className="main-content" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
+        <footer className="footer" style={{ textAlign: 'center', padding: '1rem', color: '#666', fontSize: '0.875rem' }}>
+          &copy; {new Date().getFullYear()} CodeReview CI. All rights reserved.
+        </footer>
       </main>
       
       {/* Toast Notification Container */}
