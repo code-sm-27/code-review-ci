@@ -8,6 +8,7 @@ build/
 # Environment Variables
 .env
 .env.*
+!.env.example
 .env.local
 
 # IDEs and Tools
