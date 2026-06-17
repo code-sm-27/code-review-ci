@@ -62,4 +62,4 @@ Create a `.env` file or export the following variables:
 [Live URL Placeholder](https://example.com)
 
 ## Contributing
-Contributions are always welcome! Please feel free to submit a Pull Request or open an issue.
+Contributions are always welcome! Please feel free to submit a Pull Request or open an issue. Make sure to read our contributing guidelines before submitting a pull request.
