@@ -35,13 +35,34 @@ public class CodeReviewHandler implements RequestHandler<SQSEvent, Void> {
                     diff = diff.substring(0, 6000); // Truncate oversized diffs
                 }
 
-                // 3. Call Claude API
+                // 3. Call Claude API with retry logic
                 AiReviewResponse aiResponse = null;
-                try {
-                    aiResponse = aiClient.reviewDiff(diff, repoFullName, prNumber);
-                } catch (Exception e) {
-                    context.getLogger().log("JSON Parsing or Claude API error, skipping posting. Exception: " + e.getMessage());
-                    continue; // Skip posting on JSON parse or AI error as requested
+                int maxRetries = 3;
+                int attempts = 0;
+                
+                while (attempts < maxRetries) {
+                    try {
+                        attempts++;
+                        context.getLogger().log("Calling Claude API, attempt " + attempts + " of " + maxRetries);
+                        aiResponse = aiClient.reviewDiff(diff, repoFullName, prNumber);
+                        break; // Success
+                    } catch (Exception e) {
+                        context.getLogger().log("JSON Parsing or Claude API error on attempt " + attempts + ". Exception: " + e.getMessage());
+                        if (attempts >= maxRetries) {
+                            context.getLogger().log("Max retries reached. Skipping posting for PR #" + prNumber);
+                        } else {
+                            try {
+                                Thread.sleep(2000L * attempts); // Exponential backoff (2s, 4s)
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (aiResponse == null) {
+                    continue; // Skip processing if all retries failed
                 }
 
                 // 4. Post to GitHub (only HIGH and MEDIUM)
