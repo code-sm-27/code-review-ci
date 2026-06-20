@@ -74,7 +74,9 @@ public class InternalApiClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() >= 400) {
-            System.err.println("Failed to persist reviews to Backend. Status: " + response.statusCode());
+            String errorMsg = "Failed to persist reviews to Backend. Status: " + response.statusCode() + ", Body: " + response.body();
+            System.err.println(errorMsg);
+            throw new RuntimeException(errorMsg);
         }
     }
 }
