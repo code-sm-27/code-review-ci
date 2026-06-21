@@ -64,7 +64,9 @@ public class GithubClient {
         if (response.statusCode() == 422) {
             System.err.println("GitHub rejected review (422) - possibly unchanged lines or invalid commit id: " + response.body());
         } else if (response.statusCode() >= 400) {
-            System.err.println("Failed to post review to GitHub. Status: " + response.statusCode() + ", Body: " + response.body());
+            String errorMsg = "Failed to post review to GitHub. Status: " + response.statusCode() + ", Body: " + response.body();
+            System.err.println(errorMsg);
+            throw new RuntimeException(errorMsg);
         }
     }
 }
