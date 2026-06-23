@@ -19,7 +19,7 @@ public class CodeReviewHandler implements RequestHandler<SQSEvent, Void> {
         for (SQSEvent.SQSMessage message : event.getRecords()) {
             try {
                 // Parse SQS Message Payload
-                Map<String, Object> payload = objectMapper.readValue(message.getBody(), Map.class);
+                Map<String, Object> payload = objectMapper.readValue(message.getBody(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
                 String repoFullName = (String) payload.get("repoFullName");
                 Integer prNumber = (Integer) payload.get("prNumber");
                 Long repoId = ((Number) payload.get("repoId")).longValue();
