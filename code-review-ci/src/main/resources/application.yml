@@ -65,6 +65,7 @@ app:
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 management:
   endpoints:
