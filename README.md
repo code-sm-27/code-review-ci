@@ -59,7 +59,7 @@ Create a `.env` file or export the following variables:
 - **`github-action/`**: Example GitHub Action composite workflow for consumers.
 
 ## Live Dashboard
-[Live URL Placeholder](https://example.com)
+[Live Dashboard Demo](https://example.com)
 
 ## Contributing
 Contributions are always welcome! Please feel free to submit a Pull Request or open an issue. Make sure to read our contributing guidelines before submitting a pull request.
