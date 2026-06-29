@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Repositories } from './pages/Repositories';
 import { RepoDetails } from './pages/RepoDetails';
 import { Analytics } from './pages/Analytics';
+import { Settings } from './pages/Settings';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/repos" element={<Repositories />} />
                 <Route path="/repos/:id" element={<RepoDetails />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
           </Routes>

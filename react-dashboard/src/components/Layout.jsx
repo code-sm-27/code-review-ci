@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { GitBranch as Github, LogOut, LayoutDashboard, FileCode2, BarChart2, Bell } from 'lucide-react';
+import { GitBranch as Github, LogOut, LayoutDashboard, FileCode2, BarChart2, Bell, Settings as SettingsIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRealTimeReviews } from '../hooks/useRealTimeReviews';
 
@@ -32,6 +32,7 @@ export const Layout = () => {
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/repos', icon: FileCode2, label: 'Repositories' },
     { path: '/analytics', icon: BarChart2, label: 'Analytics' },
+    { path: '/settings', icon: SettingsIcon, label: 'Settings' },
   ];
 
   return (
