@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for handling API requests related to code review.
+ */
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
